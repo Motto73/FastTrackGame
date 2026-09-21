@@ -22,7 +22,7 @@ namespace FastTrackGame
         public int coyote = 0;
         public int jumps = 0;
 
-        public Creature() : base(null)
+        public Creature(int depth) : base(depth, null)
         {
 
         }

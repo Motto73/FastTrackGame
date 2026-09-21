@@ -4,8 +4,7 @@ using System.Numerics;
 using System.Text;
 
 namespace FastTrackGame
-{
-    //Creature extends sprite, it can have multiple animations instead of just a repeating one. Also houses hitboxes, HP, AI
+{ 
     internal class Player : Creature
     {
         private bool isCrouching = false;
@@ -14,6 +13,8 @@ namespace FastTrackGame
         private float fireDelay = 100f;
         private int fireDir = 1;
 
+        public Player() : base(1) { }
+
         public override void Update(float e, Game game, bool onlyTime = false)
         {
             base.Update(e, game);
@@ -21,6 +22,40 @@ namespace FastTrackGame
 
             if (IsControlledByPlayer)
             {
+                //Debug
+                if (Input.IsPressed(Input.Key.Debug))
+                {
+                    var ps = new ParticleSystem(2)
+                    {
+                        Position = ogPos + new Vector2(0, -3),
+                        Display = "1234567890",
+                        EmissionRate = 20,
+                        ParticleSpeed = 20,
+                        ParticleLifetime = 0.5f,
+                        EmitForDuration = 2,
+                        RandomSpeed = 4,
+                        TrailLength = 0.5f
+                    };
+                    game.LoadedScenes[game.CurrentScene].QueueAdd.Add(ps);
+                }
+                //Debug
+                if (Input.IsPressed(Input.Key.FireUp))
+                {
+                    var ps = new ParticleSystem(2)
+                    {
+                        Position = ogPos + new Vector2(0, -3),
+                        Display = "xXxXxXxXxXxX",
+                        EmissionRate = 0,
+                        ParticleSpeed = 50,
+                        ParticleLifetime = 0.5f,
+                        EmitForDuration = 0,
+                        RandomSpeed = 4,
+                        TrailLength = 0.1f
+                    };
+                    ps.Burst(1000);
+                    game.LoadedScenes[game.CurrentScene].QueueAdd.Add(ps);
+                }
+
                 //Crouch
                 isCrouching = Input.IsPressed(Input.Key.Down) || Input.IsHeld(Input.Key.Down);
 
@@ -75,6 +110,11 @@ namespace FastTrackGame
             game.DebugTexts.Add("Grounded: " + IsGrounded, 1);
             game.DebugTexts.Add("Jumps   : " + jumps, 1);
             game.DebugTexts.Add($"Fire:{fireTimer} {fireDir}", 1);
+            var num = 0;
+            foreach (var s in game.LoadedScenes[game.CurrentScene].Sprites)
+                if (s is ParticleSystem)
+                    num++;
+            game.DebugTexts.Add("Total Particlesystems: " + num, 1);
 
             //Firing animations
             if (fireTimer > 0)
@@ -125,7 +165,7 @@ namespace FastTrackGame
 
         //Presets
 
-        public static Creature CreatePlayer()
+        public static Player CreatePlayer()
         {
             var idleAnim = new SpriteFrame[]
             {

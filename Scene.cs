@@ -7,8 +7,17 @@ namespace FastTrackGame
 {
     internal class Scene
     {
+
+        //TODO!!! Replace the current framebuffer system!!!
+        // - Only initialize once?
+        // - Use char[][] instead for performance
+        // - Instead of replaceat just buffer[y][x]
+        // - StringBuilder apparently works great with this
+
         public string Name { get; private set; }
         public List<Sprite> Sprites = new List<Sprite>();
+        public List<Sprite> QueueAdd = new List<Sprite>();
+        public List<Sprite> QueueRemove = new List<Sprite>();
         public List<Projectile> Projectiles = new List<Projectile>();
         private ScenePreset ogPreset;
 
@@ -23,11 +32,17 @@ namespace FastTrackGame
 
         public void Update(float elapsed, Game game)
         {
-            //Update sprites first
+            //Complete the queue first
+            foreach(var sprite in QueueAdd)
+                Sprites.Add(sprite);
+            QueueAdd.Clear();
+
+            //Update sprites second
             foreach (var sprite in Sprites)
             {
                 sprite.Update(elapsed, game);
             }
+
             //Then projectiles
             foreach (var projectile in Projectiles)
                 projectile.Update(elapsed);
@@ -36,6 +51,12 @@ namespace FastTrackGame
             if (ogPreset == ScenePreset.Intro)
                 if (Input.IsPressed(Input.Key.Space))
                     game.LoadSceneNextFrame(1);
+
+            //Last but not least, complete removals
+            foreach (var sprite in QueueRemove)
+                if (Sprites.Contains(sprite))
+                    Sprites.Remove(sprite);
+            QueueRemove.Clear();
         }
 
         public void Draw(Game game)
@@ -53,24 +74,43 @@ namespace FastTrackGame
             //Draw all sprites. In the future I should automatically cull ones not near screen.
             foreach (var sprite in Sprites)
             {
-                var texts = sprite.GetActiveFrame();
-                var offset = sprite.Position - game.CameraPosition;
-                var size = sprite.GetSize();
-
-                int yPos = (int)(offset.Y - size.Y);
-                int xPos = (int)(offset.X - size.X);
-
-                for (int y = 0; y < size.Y; y++)
+                if (sprite is ParticleSystem)
                 {
-                    for (int x = 0; x < size.X; x++)
+                    var ps = (ParticleSystem)sprite;
+                    int i = 0;
+                    var d = ps.GetDisplays();
+                    foreach(var p in ps.GetPositions())
                     {
-                        var ch = texts[y][x];
-                        if (ch == ' ' && sprite.SpaceIsAlpha) continue;
-                        var finalY = yPos + y;
-                        var finalX = xPos + x;
+                        var finalX = (int)(p - game.CameraPosition).X;
+                        var finalY = (int)(p - game.CameraPosition).Y;
                         if (finalX < game.ScreenResolution.X && finalY < game.ScreenResolution.Y && finalX >= 0 && finalY >= 0)
                         {
-                            buffer[finalY] = ReplaceAt(buffer[finalY], finalX, ch);
+                            buffer[finalY] = ReplaceAt(buffer[finalY], finalX, d[i]);
+                        }
+                        i++;
+                    }
+                }
+                else
+                {
+                    var texts = sprite.GetActiveFrame();
+                    var offset = sprite.Position - game.CameraPosition;
+                    var size = sprite.GetSize();
+
+                    int yPos = (int)(offset.Y - size.Y);
+                    int xPos = (int)(offset.X - size.X);
+
+                    for (int y = 0; y < size.Y; y++)
+                    {
+                        for (int x = 0; x < size.X; x++)
+                        {
+                            var ch = texts[y][x];
+                            if (ch == ' ' && sprite.SpaceIsAlpha) continue;
+                            var finalY = yPos + y;
+                            var finalX = xPos + x;
+                            if (finalX < game.ScreenResolution.X && finalY < game.ScreenResolution.Y && finalX >= 0 && finalY >= 0)
+                            {
+                                buffer[finalY] = ReplaceAt(buffer[finalY], finalX, ch);
+                            }
                         }
                     }
                 }
@@ -109,20 +149,20 @@ namespace FastTrackGame
             //TODO save in separate files?
             if(preset == ScenePreset.Intro)
             {
-                var funky = new CustomSprite(CustomSpriteType.Rings, game.ScreenResolution);
+                var funky = new CustomSprite(8, CustomSpriteType.Rings, game.ScreenResolution);
                 funky.Position = game.ScreenResolution;
 
                 var logo = Sprite.Logo2();
                 logo.SpaceIsAlpha = false;
                 logo.Position = game.ScreenResolution / 2 + logo.GetSize() / 2;
 
-                var pressspace = new Sprite([
+                var pressspace = new Sprite(5, [
                     new SpriteFrame([" PRESS SPACE TO PLAY "], 200f),
                     new SpriteFrame(["                     "], 200f) ]);
                 pressspace.SpaceIsAlpha = false;
                 pressspace.Position = game.ScreenResolution / 2 + pressspace.GetSize() / 2 + new Vector2(0, game.ScreenResolution.Y * 0.25f);
 
-                var hiscore = new Sprite([
+                var hiscore = new Sprite(5, [
                     new SpriteFrame([" PRESS DOWN FOR HISCORES "], 200f),
                     new SpriteFrame(["                         "], 200f) ]);
                 hiscore.SpaceIsAlpha = false;
@@ -140,7 +180,7 @@ namespace FastTrackGame
                 player.Position = new Vector2(game.ScreenResolution.X / 2, game.ScreenResolution.Y / 2);
                 Sprites.Add(player);
 
-                var box = new Sprite([
+                var box = new Sprite(1, [
                     new SpriteFrame(["XXXXXXXXXXXXXXXXXXXXXXXX"], 500f),
                     new SpriteFrame(["xXxXxXxXxXxXxXxXxXxXxXxX"], 500f) ]);
                 box.IsSolid = true;
@@ -149,7 +189,7 @@ namespace FastTrackGame
                 var box2 = box.Clone();
                 box2.Position += new Vector2(50, 2);
 
-                var box3 = new Sprite([
+                var box3 = new Sprite(1, [
                     new SpriteFrame(["XXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXX"], 500f),
                     new SpriteFrame(["xXxXxXxXxXxXxXxXxXxXxXxX", "xXxXxXxXxXxXxXxXxXxXxXxX", "xXxXxXxXxXxXxXxXxXxXxXxX", "xXxXxXxXxXxXxXxXxXxXxXxX"], 500f) ]);
                 box3.IsSolid = true;

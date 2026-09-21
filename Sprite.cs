@@ -16,15 +16,20 @@ namespace FastTrackGame
         private float time;
         public bool IsSolid = false;
         public bool SpaceIsAlpha = true;
+        private static int runningID;
+        public int ID;
+        public int Depth;
 
-        public Sprite(SpriteFrame[] frames = null)
+        public Sprite(int depth = 0, SpriteFrame[] frames = null)
         {
             Frames = frames;
+            ID = runningID++;
+            Depth = depth;
         }
 
         public Sprite Clone()
         {
-            var c = new Sprite
+            var c = new Sprite(Depth)
             {
                 Frames = Frames,
                 Position = Position,
@@ -41,7 +46,7 @@ namespace FastTrackGame
 
             if (onlyAddTime) return;
 
-            if (Frames[CurrentFrame].Duration <= time)
+            if (Frames != null && Frames[CurrentFrame].Duration <= time)
             {
                 time = 0;
                 CurrentFrame++;
@@ -74,7 +79,7 @@ namespace FastTrackGame
 
         public static Sprite Logo0()
         {
-            return new Sprite([
+            return new Sprite(10, [
                 new SpriteFrame([
                     "                                                                                      ",
                     " 88888888888                     888888888888                             88          ",
@@ -92,7 +97,7 @@ namespace FastTrackGame
 
         public static Sprite Logo1()
         {
-            return new Sprite([
+            return new Sprite(10, [
                 new SpriteFrame([
                     "                                                                               ",
                     " O))))))))                   O))  O))) O))))))                        O))      ",
@@ -109,7 +114,7 @@ namespace FastTrackGame
 
         public static Sprite Logo2()
         {
-            return new Sprite([
+            return new Sprite(10 ,[
                 new SpriteFrame([
                     "                                                                                  ",
                     "  ________                     __   ________                            __        ",
@@ -127,7 +132,7 @@ namespace FastTrackGame
         }
         public static Sprite Logo3()
         {
-            return new Sprite([
+            return new Sprite(10, [
                 new SpriteFrame([
                     "    ,                                                                                           ",
                     "    Et                                                                                          ",

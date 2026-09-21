@@ -5,6 +5,7 @@ using System.Text;
 
 namespace FastTrackGame
 {
+    //Could possibly extend sprite?
     internal class Projectile
     {
         public char Visual;

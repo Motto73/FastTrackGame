@@ -15,7 +15,7 @@ namespace FastTrackGame
             base.Update(elapsed, game, true);
         }
 
-        public CustomSprite(CustomSpriteType type, Vector2 size) : base (null)
+        public CustomSprite(int depth, CustomSpriteType type, Vector2 size) : base (depth, null)
         {
             CustomType = type;
             Size = size;
