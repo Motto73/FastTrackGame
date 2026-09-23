@@ -11,14 +11,32 @@ namespace FastTrackGame
         private float fireTimer = 0;
         //TODO - weapon class
         private float fireDelay = 100f;
-        private int fireDir = 1;
+        private Vector2 fireDir = new Vector2(1, 0);
 
         public Player() : base(1) { }
 
         public override void Update(float e, Game game, bool onlyTime = false)
         {
             base.Update(e, game);
+
+            if (IsDead)
+            {
+                //Only check for restart/hiscores if dead
+                if (Input.IsPressed(Input.Key.Down) || Input.IsHeld(Input.Key.Down))
+                {
+                    game.LoadSceneNextFrame(3, true);
+                }
+                if (Input.IsPressed(Input.Key.Space ) || Input.IsHeld(Input.Key.Space ))
+                {
+                    game.LoadSceneNextFrame(0, true);
+                }
+                return;
+            }
+
             var ogPos = Position;
+
+            if (ogPos.Y > game.CameraPosition.Y + game.ScreenResolution.Y + 5)
+                Kill(game);
 
             if (IsControlledByPlayer)
             {
@@ -38,41 +56,46 @@ namespace FastTrackGame
                     };
                     game.LoadedScenes[game.CurrentScene].QueueAdd.Add(ps);
                 }
-                //Debug
-                if (Input.IsPressed(Input.Key.FireUp))
-                {
-                    var ps = new ParticleSystem(2)
-                    {
-                        Position = ogPos + new Vector2(0, -3),
-                        Display = "xXxXxXxXxXxX",
-                        EmissionRate = 0,
-                        ParticleSpeed = 50,
-                        ParticleLifetime = 0.5f,
-                        EmitForDuration = 0,
-                        RandomSpeed = 4,
-                        TrailLength = 0.1f
-                    };
-                    ps.Burst(1000);
-                    game.LoadedScenes[game.CurrentScene].QueueAdd.Add(ps);
-                }
 
                 //Crouch
                 isCrouching = Input.IsPressed(Input.Key.Down) || Input.IsHeld(Input.Key.Down);
 
                 //Firing
                 fireTimer -= e;
-                if(fireTimer <= 0)
+                if(fireTimer < 0) fireTimer = 0;
+                if (Input.AnyMatching([Input.Key.FireUp, Input.Key.FireRight, Input.Key.FireDown, Input.Key.FireLeft], [Input.KeyState.Held]))
                 {
-                    if (Input.IsPressed(Input.Key.FireLeft))
+                    if (fireTimer <= 0)
                     {
+                        Vector2 xy = Vector2.Zero;
+                        if (Input.IsHeld(Input.Key.FireRight)) xy.X++;
+                        if (Input.IsHeld(Input.Key.FireLeft)) xy.X--;
+                        if (Input.IsHeld(Input.Key.FireDown)) xy.Y++;
+                        if (Input.IsHeld(Input.Key.FireUp)) xy.Y--;
+                        //If for some reason the player holds opposing keys, set a default direction (down)
+                        if (xy.Length() < 0.1) xy = new Vector2(0, 1);
+                        fireDir = xy;
+                        xy = Vector2.Normalize(xy);
                         fireTimer = fireDelay;
-                        fireDir = -1;
-                        game.LoadedScenes[game.CurrentScene].Projectiles.Add(new Projectile('*', Position + new Vector2(-3, isCrouching ? -1 : -3), new Vector2(-100, 0), this, 1, false));
-                    } else if (Input.IsPressed(Input.Key.FireRight))
-                    {
-                        fireTimer = fireDelay;
-                        fireDir = 1;
-                        game.LoadedScenes[game.CurrentScene].Projectiles.Add(new Projectile('*', Position + new Vector2(1, isCrouching ? -1 : -3), new Vector2(100, 0), this, 1, false));
+                        var pos = Position + new Vector2(-1, isCrouching ? -1 : -3) + fireDir;
+                        var dir = Utils.GetRatiod(xy);
+                        game.LoadedScenes[game.CurrentScene].Projectiles.Add(new Projectile('*', pos, dir * 200 , this, 1, false));
+                        var ps = new ParticleSystem(2)
+                        {
+                            Position = pos,
+                            Display = ".*.*.*.*.",
+                            EmissionRate = 0,
+                            ParticleSpeed = 50,
+                            ParticleLifetime = 0.05f,
+                            EmitForDuration = 0,
+                            RandomSpeed = 1,
+                            RandomLifetime = 0.1f,
+                            EmissionDirection = dir,
+                            RandomDirection = .5f,
+                            ParticleDampen = 0.9f
+                        };
+                        ps.Burst(20);
+                        game.LoadedScenes[game.CurrentScene].QueueAdd.Add(ps);
                     }
                 }
 
@@ -91,9 +114,30 @@ namespace FastTrackGame
                 if (Input.IsPressed(Input.Key.Up))
                 {
                     if (jumps > 0 || IsGrounded)
+                    {
                         yMomentum = -.75f;
-                    if (!IsGrounded)
-                        jumps -= 1;
+                        if (!IsGrounded)
+                        {
+                            jumps -= 1;
+
+                            var ps = new ParticleSystem(2)
+                            {
+                                Position = ogPos + new Vector2(0, -3),
+                                Display = ".*.*.*.*.",
+                                EmissionRate = 0,
+                                ParticleSpeed = 20,
+                                ParticleLifetime = 0.1f,
+                                EmitForDuration = 0,
+                                RandomSpeed = 1,
+                                RandomLifetime = 0.5f,
+                                EmissionDirection = new Vector2(0, 1),
+                                RandomDirection = 2f,
+                                ParticleDampen = 0.9f
+                            };
+                            ps.Burst(6);
+                            game.LoadedScenes[game.CurrentScene].QueueAdd.Add(ps);
+                        }
+                    }
                 }
 
                 //Apply
@@ -119,20 +163,17 @@ namespace FastTrackGame
             //Firing animations
             if (fireTimer > 0)
             {
-                if (isCrouching)
-                {
-                    if (fireDir > 0)
-                        SetAnimation("fireRightCrouch");
-                    else
-                        SetAnimation("fireLeftCrouch");
-                }
-                else
-                {
-                    if (fireDir > 0)
-                        SetAnimation("fireRight");
-                    else
-                        SetAnimation("fireLeft");
-                }
+                var str = "fire";
+                if (fireDir == new Vector2(1, 0)) str += "Right";
+                if (fireDir == new Vector2(-1, 0)) str += "Left";
+                if (fireDir == new Vector2(0, 1)) str += "Down";
+                if (fireDir == new Vector2(0, -1)) str += "Up";
+                if (fireDir == new Vector2(1, 1)) str += "RightDown";
+                if (fireDir == new Vector2(1, -1)) str += "RightUp";
+                if (fireDir == new Vector2(-1, 1)) str += "LeftDown";
+                if (fireDir == new Vector2(-1, -1)) str += "LeftUp";
+                if (isCrouching) str += "Crouch";
+                SetAnimation(str);
             }
             else if (isCrouching)
                 SetAnimation("crouch");
@@ -163,12 +204,54 @@ namespace FastTrackGame
             lastMove = Position - ogPos;
         }
 
+        public override void Kill(Game game)
+        {
+            var ps = new ParticleSystem(2)
+            {
+                Position = Position + new Vector2(0, -3),
+                Display = "1234567890/*-+!#¤%&",
+                EmissionRate = 0,
+                ParticleSpeed = 50,
+                ParticleLifetime = 5f,
+                EmitForDuration = 0,
+                RandomSpeed = 4,
+                TrailLength = 0.1f
+            };
+            ps.Burst(200);
+            game.LoadedScenes[game.CurrentScene].QueueAdd.Add(ps);
+
+            Sprite logo = Sprite.GetRandomDeathLogo();
+            logo.DoGlitch = true;
+            logo.Position = game.CameraPosition + game.ScreenResolution / 2 + logo.GetSize() / 2;
+
+            var pressspace = new Sprite(5, [
+                new SpriteFrame([" PRESS SPACE TO RESTART "], 200f),
+                new SpriteFrame(["                        "], 200f) ]);
+            pressspace.SpaceIsAlpha = false;
+            pressspace.Position = game.CameraPosition + game.ScreenResolution / 2 + pressspace.GetSize() / 2 + new Vector2(0, game.ScreenResolution.Y * 0.25f);
+
+            var hiscore = new Sprite(5, [
+                new SpriteFrame([" PRESS DOWN FOR HISCORES "], 200f),
+                new SpriteFrame(["                         "], 200f) ]);
+            hiscore.SpaceIsAlpha = false;
+            hiscore.Position = game.CameraPosition + new Vector2((game.ScreenResolution / 2 + hiscore.GetSize() / 2).X, pressspace.Position.Y + 2);
+
+
+            game.LoadedScenes[game.CurrentScene].QueueAdd.Add(logo);
+            game.LoadedScenes[game.CurrentScene].QueueAdd.Add(hiscore);
+            game.LoadedScenes[game.CurrentScene].QueueAdd.Add(pressspace);
+
+            base.Kill(game);
+        }
+
         //Presets
 
         public static Player CreatePlayer()
         {
-            var idleAnim = new SpriteFrame[]
-            {
+            var c = new Player();
+
+            c.Animations.Add("idle",
+            [
                 new SpriteFrame([
                 " o ",
                 "(|)",
@@ -193,24 +276,20 @@ namespace FastTrackGame
                 "  o",
                 "(|)",
                 "/ \\" ], 100),
-            };
-            var sprintRight = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("debuge",
+            [
                 new SpriteFrame([
-                "_ o",
-                " /L",
-                "/ >" ], 100),
+                "xXx",
+                "XxX",
+                "xXx" ], 50),
                 new SpriteFrame([
-                "  o",
-                "//-",
-                ">\\ " ], 100),
-                new SpriteFrame([
-                " o ",
-                "<|-",
-                "/> " ], 100),
-            };
-            var sprintLeft = new SpriteFrame[]
-            {
+                "XxX",
+                "xXx",
+                "XxX" ], 50)
+            ]);
+            c.Animations.Add("sprintLeft",
+            [
                 new SpriteFrame([
                 "o _",
                 "J\\ ",
@@ -223,9 +302,39 @@ namespace FastTrackGame
                 " o ",
                 "-|>",
                 " <\\" ], 100),
-            };
-            var jumpRight = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("sprintRight",
+            [
+                new SpriteFrame([
+                "_ o",
+                " /L",
+                "/ >" ], 100),
+                new SpriteFrame([
+                "  o",
+                "//-",
+                ">\\ " ], 100),
+                new SpriteFrame([
+                " o ",
+                "<|-",
+                "/> " ], 100),
+            ]);
+            c.Animations.Add("jumpLeft",
+            [
+                new SpriteFrame([
+                "\\o/",
+                "  \\",
+                " ((" ], 100),
+                new SpriteFrame([
+                "\\o/",
+                "  \\",
+                " <<" ], 100),
+                new SpriteFrame([
+                "\\o/",
+                " | ",
+                "(( " ], 100000),
+            ]);
+            c.Animations.Add("jumpRight",
+            [
                 new SpriteFrame([
                 " \\o",
                 "  /",
@@ -250,9 +359,9 @@ namespace FastTrackGame
                 "_o ",
                 "  \\",
                 " <<" ], 50),
-            };
-            var jumpLeft = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("fallLeft",
+            [
                 new SpriteFrame([
                 "\\o/",
                 "  \\",
@@ -265,9 +374,9 @@ namespace FastTrackGame
                 "\\o/",
                 " | ",
                 "(( " ], 100000),
-            };
-            var fallRight = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("fallRight",
+            [
                 new SpriteFrame([
                 "\\o/",
                 "/  ",
@@ -280,81 +389,117 @@ namespace FastTrackGame
                 "\\o/",
                 " | ",
                 " ))" ], 100000),
-            };
-            var fallLeft = new SpriteFrame[]
-            {
-                new SpriteFrame([
-                "\\o/",
-                "  \\",
-                " ((" ], 100),
-                new SpriteFrame([
-                "\\o/",
-                "  \\",
-                " <<" ], 100),
-                new SpriteFrame([
-                "\\o/",
-                " | ",
-                "(( " ], 100000),
-            };
-            var crouch = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("crouch",
+            [
                 new SpriteFrame([
                 "<o>",
                 "< >" ], 10000),
-            };
-            var fireRight = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("fireRight",
+            [
                 new SpriteFrame([
                 "o__",
                 "|' ",
                 "/> " ], 10000),
-            };
-            var fireRightC = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("fireRightCrouch",
+            [
                 new SpriteFrame([
                 "o__",
                 ">>'" ], 10000),
-            };
-            var fireLeft = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("fireRightUp",
+            [
+                new SpriteFrame([
+                "o/>",
+                "|' ",
+                "/\\ " ], 10000),
+            ]);
+            c.Animations.Add("fireRightUpCrouch",
+            [
+                new SpriteFrame([
+                "o/>",
+                "<\\ ",], 10000),
+            ]);
+            c.Animations.Add("fireRightDown",
+            [
+                new SpriteFrame([
+                "o. ",
+                "|'\\",
+                "/\\ " ], 10000),
+            ]);
+            c.Animations.Add("fireRightDownCrouch",
+            [
+                new SpriteFrame([
+                "o. ",
+                "<'\\"], 10000),
+            ]);
+            c.Animations.Add("fireLeft",
+            [
                 new SpriteFrame([
                 "__o",
                 " '|",
                 " <\\" ], 10000),
-            };
-            var fireLeftC = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("fireLeftCrouch",
+            [
                 new SpriteFrame([
                 "__o",
                 "'<<" ], 10000),
-            };
-            var debugAnim = new SpriteFrame[]
-            {
+            ]);
+            c.Animations.Add("fireLeftUp",
+            [
                 new SpriteFrame([
-                "xXx",
-                "XxX",
-                "xXx" ], 50),
+                "<\\o",
+                " '|",
+                " /\\" ], 10000),
+            ]);
+            c.Animations.Add("fireLeftDown",
+            [
                 new SpriteFrame([
-                "XxX",
-                "xXx",
-                "XxX" ], 50)
-            };
-
-            var c = new Player();
-
-            c.Animations.Add("idle", idleAnim);
-            c.Animations.Add("debuge", debugAnim);
-            c.Animations.Add("sprintLeft", sprintLeft);
-            c.Animations.Add("sprintRight", sprintRight);
-            c.Animations.Add("jumpLeft", jumpLeft);
-            c.Animations.Add("jumpRight", jumpRight);
-            c.Animations.Add("fallLeft", fallLeft);
-            c.Animations.Add("fallRight", fallRight);
-            c.Animations.Add("crouch", crouch);
-            c.Animations.Add("fireRight", fireRight);
-            c.Animations.Add("fireRightCrouch", fireRightC);
-            c.Animations.Add("fireLeft", fireLeft);
-            c.Animations.Add("fireLeftCrouch", fireLeftC);
+                " .o",
+                "/'|",
+                " /\\" ], 10000),
+            ]);
+            c.Animations.Add("fireLeftUpCrouch",
+            [
+                new SpriteFrame([
+                "<\\o",
+                " />"], 10000),
+            ]);
+            c.Animations.Add("fireLeftDownCrouch",
+            [
+                new SpriteFrame([
+                " .o",
+                "/'>"], 10000),
+            ]);
+            c.Animations.Add("fireUp",
+            [
+                new SpriteFrame([
+                "o|>",
+                " |'",
+                "/ \\" ], 10000),
+            ]);
+            c.Animations.Add("fireUpCrouch",
+            [
+                new SpriteFrame([
+                "o|>",
+                "< >"], 10000),
+            ]);
+            c.Animations.Add("fireDown",
+            [
+                new SpriteFrame([
+                " o.",
+                " ||",
+                "/| " ], 10000),
+            ]);
+            c.Animations.Add("fireDownCrouch",
+            [
+                new SpriteFrame([
+                ".o.",
+                "<|>",], 10000),
+            ]);
 
             c.SetAnimation("idle");
             c.Acceleration = 30;

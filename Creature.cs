@@ -21,6 +21,7 @@ namespace FastTrackGame
         public Vector2 lastMove;
         public int coyote = 0;
         public int jumps = 0;
+        public bool IsDead = false;
 
         public Creature(int depth) : base(depth, null)
         {
@@ -43,6 +44,12 @@ namespace FastTrackGame
             }
 
             lastMove = Position - ogPos;
+        }
+
+        public virtual void Kill(Game game)
+        {
+            IsDead = true;
+            game.DebugTexts.Add(ID + " DEAD", 250);
         }
 
         public void SetAnimation(string name, float speed = 1)

@@ -19,6 +19,7 @@ namespace FastTrackGame
         private static int runningID;
         public int ID;
         public int Depth;
+        public bool DoGlitch = false;
 
         public Sprite(int depth = 0, SpriteFrame[] frames = null)
         {
@@ -151,6 +152,90 @@ namespace FastTrackGame
                     "    ;#t    ,,,      .,,  ,               :         :              ,,,      .,,                  ",
                     "     :;                                                                                         ",], 500f),
                 ]);
+        }
+        public static Sprite GetRandomLogo()
+        {
+            var rng = new Random().Next(4);
+            if (rng == 0) return Logo0();
+            if (rng == 1) return Logo1();
+            if (rng == 2) return Logo2();
+            return Logo3();
+        }
+
+        public static Sprite LogoDeath()
+        {
+            return new Sprite(10, [
+                new SpriteFrame([
+                    "░▒▓███████▓▒░░▒▓████████▓▒░░▒▓██████▓▒░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░ ",
+                    "░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░ ",
+                    "░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░ ",
+                    "░▒▓█▓▒░░▒▓█▓▒░▒▓██████▓▒░ ░▒▓████████▓▒░ ░▒▓█▓▒░   ░▒▓████████▓▒░ ",
+                    "░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░ ",
+                    "░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░ ",
+                    "░▒▓███████▓▒░░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░ ",], 500f),
+                ]);
+        }
+        public static Sprite LogoDeath2()
+        {
+            return new Sprite(10, [
+                new SpriteFrame([
+                    "▓█████▄ ▓█████ ▄▄▄     ▄▄▄█████▓ ██░ ██ ",
+                    "▒██▀ ██▌▓█   ▀▒████▄   ▓  ██▒ ▓▒▓██░ ██▒",
+                    "░██   █▌▒███  ▒██  ▀█▄ ▒ ▓██░ ▒░▒██▀▀██░",
+                    "░▓█▄   ▌▒▓█  ▄░██▄▄▄▄██░ ▓██▓ ░ ░▓█ ░██ ",
+                    "░▒████▓ ░▒████▒▓█   ▓██▒ ▒██▒ ░ ░▓█▒░██▓",
+                    " ▒▒▓  ▒ ░░ ▒░ ░▒▒   ▓▒█░ ▒ ░░    ▒ ░░▒░▒",
+                    " ░ ▒  ▒  ░ ░  ░ ▒   ▒▒ ░   ░     ▒ ░▒░ ░",
+                    " ░ ░  ░    ░    ░   ▒    ░       ░  ░░ ░",
+                    "   ░       ░  ░     ░  ░         ░  ░  ░"], 500f),
+            ]);
+        }
+        public static Sprite LogoDeath3()
+        {
+            return new Sprite(10, [
+                new SpriteFrame([
+                    " @@@@@@@   @@@@@@@@   @@@@@@   @@@@@@@  @@@  @@@  ",
+                    " @@@@@@@@  @@@@@@@@  @@@@@@@@  @@@@@@@  @@@  @@@  ",
+                    " @@!  @@@  @@!       @@!  @@@    @@!    @@!  @@@  ",
+                    " !@!  @!@  !@!       !@!  @!@    !@!    !@!  @!@  ",
+                    " @!@  !@!  @!!!:!    @!@!@!@!    @!!    @!@!@!@!  ",
+                    " !@!  !!!  !!!!!:    !!!@!!!!    !!!    !!!@!!!!  ",
+                    " !!:  !!!  !!:       !!:  !!!    !!:    !!:  !!!  ",
+                    " :!:  !:!  :!:       :!:  !:!    :!:    :!:  !:!  ",
+                    "  :::: ::   :: ::::  ::   :::     ::    ::   :::  ",
+                    " :: :  :   : :: ::    :   : :     :      :   : :  "], 500f),
+            ]);
+
+        }
+        public static Sprite LogoDeath4()
+        {
+            return new Sprite(10, [
+                new SpriteFrame([
+                    " ED.                                                      ",
+                    " E#Wi                 ,;                                  ",
+                    " E###G.             f#i                        .    .     ",
+                    " E#fD#W;          .E#t             .. GEEEEEEELDi   Dt    ",
+                    " E#t t##L        i#W,             ;W, ,;;L#K;;.E#i  E#i   ",
+                    " E#t  .E#K,     L#D.             j##,    t#E   E#t  E#t   ",
+                    " E#t    j##f  :K#Wfff;          G###,    t#E   E#t  E#t   ",
+                    " E#t    :E#K: i##WLLLLt       :E####,    t#E   E########f.",
+                    " E#t   t##L    .E#L          ;W#DG##,    t#E   E#j..K#j...",
+                    " E#t .D#W;       f#E:       j###DW##,    t#E   E#t  E#t   ",
+                    " E#tiW#G.         ,WW;     G##i,,G##,    t#E   E#t  E#t   ", 
+                    " E#K##i            .D#;  :K#K:   L##,    t#E   f#t  f#t   ",
+                    " E##D.               tt ;##D.    L##,     fE    ii   ii   ",
+                    " E#t                    ,,,      .,,       :              "], 500f),
+            ]);
+
+        }
+
+        public static Sprite GetRandomDeathLogo()
+        {
+            var rng = new Random().Next(4);
+            if (rng == 0) return LogoDeath();
+            if (rng == 1) return LogoDeath2();
+            if (rng == 2) return LogoDeath3();
+            return LogoDeath4();
         }
     }
 }

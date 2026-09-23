@@ -30,6 +30,7 @@ namespace FastTrackGame
         public List<Scene> LoadedScenes = new List<Scene>();
         private int nextScene = -1;
         private int currentScene = -1;
+        private bool resetScene = false;
         public int CurrentScene { get { return currentScene; } private set; }
 
         public Dictionary<string, float> DebugTexts = new Dictionary<string, float>();
@@ -45,8 +46,9 @@ namespace FastTrackGame
         public void Start()
         {
             LoadedScenes.Add(new Scene("Intro", this, ScenePreset.Intro));
-            LoadedScenes.Add(new Scene("Level1", this, ScenePreset.Level1));
             LoadedScenes.Add(new Scene("Pause", this, ScenePreset.Pause));
+            LoadedScenes.Add(new Scene("Level1", this, ScenePreset.Level1));
+            LoadedScenes.Add(new Scene("HiScores", this, ScenePreset.HiScores));
 
             currentScene = 0;
 
@@ -76,6 +78,10 @@ namespace FastTrackGame
             //Check if a new scene should be set active
             if(nextScene != -1)
             {
+                if (resetScene)
+                    LoadedScenes[currentScene] = Scene.Reset(LoadedScenes[currentScene], this);
+                CameraPosition = Vector2.Zero;
+                Time = 0;
                 currentScene = nextScene;
                 nextScene = -1;
             }
@@ -95,8 +101,9 @@ namespace FastTrackGame
             }
         }
 
-        public void LoadSceneNextFrame(int scene)
+        public void LoadSceneNextFrame(int scene, bool resetCurrent = false)
         {
+            resetScene = resetCurrent;
             if (scene >= 0 && scene < LoadedScenes.Count)
                 nextScene = scene;
             else throw new ArgumentException($"Tried to change to nonexisting scene: {scene}");

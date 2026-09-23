@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using System.Xml.Linq;
 
 namespace FastTrackGame
 {
@@ -20,6 +21,7 @@ namespace FastTrackGame
         public List<Sprite> QueueRemove = new List<Sprite>();
         public List<Projectile> Projectiles = new List<Projectile>();
         private ScenePreset ogPreset;
+        private float spawnCursor = 0;
 
         public Scene(string name, Game game, ScenePreset preset = ScenePreset.None)
         {
@@ -27,11 +29,24 @@ namespace FastTrackGame
             ogPreset = preset;
 
             LoadPreset(preset, game);
-            game.DebugTexts.Add("Loaded " + name, 500);
         }
 
         public void Update(float elapsed, Game game)
         {
+            //Add new ones too (this shit ass)
+            if(ogPreset == ScenePreset.Level1)
+            {
+                if (spawnCursor < game.CameraPosition.X + game.ScreenResolution.X)
+                {
+                    spawnCursor = game.CameraPosition.X + game.ScreenResolution.X * 1.5f;
+                    var box = new Sprite(1, [
+                    new SpriteFrame(["XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"], 500f),
+                    new SpriteFrame(["xXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx"], 500f) ]);
+                    box.IsSolid = true;
+                    box.Position = new Vector2(spawnCursor + game.ScreenResolution.X, game.ScreenResolution.Y / 4 * 3);
+                    Sprites.Add(box);
+                }
+            }
             //Complete the queue first
             foreach(var sprite in QueueAdd)
                 Sprites.Add(sprite);
@@ -40,7 +55,10 @@ namespace FastTrackGame
             //Update sprites second
             foreach (var sprite in Sprites)
             {
-                sprite.Update(elapsed, game);
+                if(sprite.Position.X < game.CameraPosition.X)
+                    QueueRemove.Add(sprite);
+                else
+                    sprite.Update(elapsed, game);
             }
 
             //Then projectiles
@@ -49,14 +67,25 @@ namespace FastTrackGame
 
             //TODO - maybe make custom class for different scene types to have custom scripts running in them
             if (ogPreset == ScenePreset.Intro)
+            {
+                if (Input.IsPressed(Input.Key.Down) || Input.IsHeld(Input.Key.Down))
+                {
+                    game.LoadSceneNextFrame(3, true);
+                }
                 if (Input.IsPressed(Input.Key.Space))
-                    game.LoadSceneNextFrame(1);
+                {
+                    game.LoadSceneNextFrame(2, true);
+                }
+            }
 
             //Last but not least, complete removals
             foreach (var sprite in QueueRemove)
                 if (Sprites.Contains(sprite))
                     Sprites.Remove(sprite);
             QueueRemove.Clear();
+
+            //Debug
+            game.DebugTexts.Add($"Scene {Name} | Sprites {Sprites.Count}", 1);
         }
 
         public void Draw(Game game)
@@ -72,6 +101,7 @@ namespace FastTrackGame
                 buffer[y] = s;
             }
             //Draw all sprites. In the future I should automatically cull ones not near screen.
+            var rng = new Random((int)(Math.Floor(game.Time / 50)));
             foreach (var sprite in Sprites)
             {
                 if (sprite is ParticleSystem)
@@ -101,12 +131,16 @@ namespace FastTrackGame
 
                     for (int y = 0; y < size.Y; y++)
                     {
+                        var glitchAdd = 0;
+                        if (sprite.DoGlitch)
+                            if (rng.NextSingle() > 0.96f)
+                                glitchAdd++;
                         for (int x = 0; x < size.X; x++)
                         {
                             var ch = texts[y][x];
                             if (ch == ' ' && sprite.SpaceIsAlpha) continue;
                             var finalY = yPos + y;
-                            var finalX = xPos + x;
+                            var finalX = xPos + x + glitchAdd;
                             if (finalX < game.ScreenResolution.X && finalY < game.ScreenResolution.Y && finalX >= 0 && finalY >= 0)
                             {
                                 buffer[finalY] = ReplaceAt(buffer[finalY], finalX, ch);
@@ -144,6 +178,12 @@ namespace FastTrackGame
             }
         }
 
+        public static Scene Reset(Scene scene, Game game)
+        {
+            var s = new Scene(scene.Name, game, scene.ogPreset);
+            return s;
+        }
+
         private void LoadPreset(ScenePreset preset, Game game)
         {
             //TODO save in separate files?
@@ -152,7 +192,7 @@ namespace FastTrackGame
                 var funky = new CustomSprite(8, CustomSpriteType.Rings, game.ScreenResolution);
                 funky.Position = game.ScreenResolution;
 
-                var logo = Sprite.Logo2();
+                Sprite logo = Sprite.GetRandomLogo();
                 logo.SpaceIsAlpha = false;
                 logo.Position = game.ScreenResolution / 2 + logo.GetSize() / 2;
 
@@ -166,7 +206,6 @@ namespace FastTrackGame
                     new SpriteFrame([" PRESS DOWN FOR HISCORES "], 200f),
                     new SpriteFrame(["                         "], 200f) ]);
                 hiscore.SpaceIsAlpha = false;
-                hiscore.Position = game.ScreenResolution / 2 + hiscore.GetSize() / 2 + new Vector2(0, game.ScreenResolution.Y * 0.25f);
                 hiscore.Position = new Vector2((game.ScreenResolution / 2 + hiscore.GetSize() / 2).X, pressspace.Position.Y + 2);
 
                 Sprites.Add(funky);
@@ -195,9 +234,25 @@ namespace FastTrackGame
                 box3.IsSolid = true;
                 box3.Position = new Vector2(game.ScreenResolution.X / 3 + 20, game.ScreenResolution.Y / 4 * 3);
 
+                spawnCursor = game.CameraPosition.X + game.ScreenResolution.X;
+
                 Sprites.Add(box);
                 Sprites.Add(box2);
                 Sprites.Add(box3);
+            }
+            if(preset == ScenePreset.HiScores)
+            {
+                var eye = new CustomSprite(8, CustomSpriteType.Eye, game.ScreenResolution);
+                eye.Position = game.ScreenResolution;
+
+                var pressspace = new Sprite(5, [
+                    new SpriteFrame([" HISCORES ARE NOT YET IMPLEMNTED"], 200f),
+                    new SpriteFrame(["------ UNDER CONSTRUCTION ------"], 200f) ]);
+                pressspace.SpaceIsAlpha = false;
+                pressspace.Position = game.ScreenResolution / 2 + pressspace.GetSize() / 2 + new Vector2(0, game.ScreenResolution.Y * 0.25f);
+                
+                Sprites.Add(eye);
+                Sprites.Add(pressspace);
             }
         }
 
@@ -216,5 +271,6 @@ namespace FastTrackGame
         Intro,
         Level1,
         Pause,
+        HiScores
     }
 }

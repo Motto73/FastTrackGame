@@ -10,7 +10,6 @@
             const int FrameRate = 100;
 
             //Console setup
-            //Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.Green;
             Console.CursorVisible = false;
             Console.SetCursorPosition(0, 0);

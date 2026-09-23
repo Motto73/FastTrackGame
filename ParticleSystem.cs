@@ -20,7 +20,8 @@ namespace FastTrackGame
         public float RandomDirection = MathF.Tau;
         public float ParticleSpeed = 10;
         public float RandomSpeed = 2;
-        public float ParticleDampen = 0;
+        public float ParticleDampen = 1;
+        public float ParticleGravity = 1;
         public float ParticleLifetime = 5;
         public float RandomLifetime = 0.1f;
         public float ParticleNoiseStrength = 1;
@@ -125,16 +126,14 @@ namespace FastTrackGame
             public Vector2 Position;
             public Vector2 Velocity;
             public float Lifetime;
-            public bool IsAffectedByGravity;
             public bool IsTrail;
             private Vector2 lastPos;
 
-            public Particle(Vector2 pos, Vector2 vel, float life, bool gravity, bool trail = false)
+            public Particle(Vector2 pos, Vector2 vel, float life, bool trail = false)
             {
                 Position = pos;
                 Velocity = vel;
                 Lifetime = life;
-                IsAffectedByGravity = gravity;
                 IsTrail = trail;
                 lastPos = pos;
             }
@@ -144,8 +143,8 @@ namespace FastTrackGame
                 float dt = e / 1000f;
                 Lifetime -= dt;
                 Position += Velocity * dt;
-                if (IsAffectedByGravity)
-                    Velocity += new Vector2(0, 100 * dt);
+                Velocity += new Vector2(0, 100 * dt * system.ParticleGravity);
+                Velocity *= system.ParticleDampen;
                 /*
                 foreach (var f in system.Forces)
                     if (Vector2.Distance(Position, new Vector2(f.X, f.Y)) < f.W)
@@ -157,7 +156,7 @@ namespace FastTrackGame
                     if(Vector2.DistanceSquared(lastPos, Position) > 1)
                     {
                         //Create a particle with TrailLength as lifetime
-                        var p = new Particle(Position, Vector2.Zero, system.TrailLength, false, true);
+                        var p = new Particle(Position, Vector2.Zero, system.TrailLength, true);
                         system.trails.Add(p);
                         lastPos = Position;
                     }
@@ -168,6 +167,7 @@ namespace FastTrackGame
             {
                 var f = Lifetime / s.ParticleLifetime;
                 f *= s.Display.Length - 1;
+                f = Math.Clamp(f, 0, s.Display.Length - 1);
                 return s.Display[(int)f];
             }
         }

@@ -113,6 +113,16 @@ namespace FastTrackGame
         {
             return checkKey(key, KeyState.Released);
         }
+        public static bool AnyMatching(Key[] keys, KeyState[] states)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var state in states)
+                    if (checkKey(key, state))
+                        return true;
+            }
+            return false;
+        }
         private static bool checkKey(Key key, KeyState state)
         {
             if (values.ContainsKey(key))
