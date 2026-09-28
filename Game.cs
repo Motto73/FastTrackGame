@@ -47,7 +47,7 @@ namespace FastTrackGame
         {
             LoadedScenes.Add(new Scene("Intro", this, ScenePreset.Intro));
             LoadedScenes.Add(new Scene("Pause", this, ScenePreset.Pause));
-            LoadedScenes.Add(new Scene("Level1", this, ScenePreset.Level1));
+            LoadedScenes.Add(new GameScene("Level1", this, ScenePreset.Level1));
             LoadedScenes.Add(new Scene("HiScores", this, ScenePreset.HiScores));
 
             currentScene = 0;
@@ -62,7 +62,7 @@ namespace FastTrackGame
         public void Update()
         {
             //Add elapsed time
-            timeElapsed += frameTime;
+            timeElapsed += frameTime * GameSpeed;
 
             //Update debug texts
             List<string> removeKeys = new List<string>(); 
@@ -94,7 +94,7 @@ namespace FastTrackGame
             //Do stuff
             if (currentScene != -1 && currentScene < LoadedScenes.Count)
             {
-                LoadedScenes[currentScene].Update(frameTime, this);
+                LoadedScenes[currentScene].Update(frameTime * GameSpeed, this);
 
                 //Finally, draw it all
                 LoadedScenes[currentScene].Draw(this);

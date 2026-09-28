@@ -14,14 +14,13 @@ namespace FastTrackGame
         // - Use char[][] instead for performance
         // - Instead of replaceat just buffer[y][x]
         // - StringBuilder apparently works great with this
-
+        
         public string Name { get; private set; }
         public List<Sprite> Sprites = new List<Sprite>();
         public List<Sprite> QueueAdd = new List<Sprite>();
         public List<Sprite> QueueRemove = new List<Sprite>();
         public List<Projectile> Projectiles = new List<Projectile>();
         private ScenePreset ogPreset;
-        private float spawnCursor = 0;
 
         public Scene(string name, Game game, ScenePreset preset = ScenePreset.None)
         {
@@ -31,22 +30,8 @@ namespace FastTrackGame
             LoadPreset(preset, game);
         }
 
-        public void Update(float elapsed, Game game)
+        public virtual void Update(float elapsed, Game game)
         {
-            //Add new ones too (this shit ass)
-            if(ogPreset == ScenePreset.Level1)
-            {
-                if (spawnCursor < game.CameraPosition.X + game.ScreenResolution.X)
-                {
-                    spawnCursor = game.CameraPosition.X + game.ScreenResolution.X * 1.5f;
-                    var box = new Sprite(1, [
-                    new SpriteFrame(["XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"], 500f),
-                    new SpriteFrame(["xXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx"], 500f) ]);
-                    box.IsSolid = true;
-                    box.Position = new Vector2(spawnCursor + game.ScreenResolution.X, game.ScreenResolution.Y / 4 * 3);
-                    Sprites.Add(box);
-                }
-            }
             //Complete the queue first
             foreach(var sprite in QueueAdd)
                 Sprites.Add(sprite);
@@ -65,7 +50,7 @@ namespace FastTrackGame
             foreach (var projectile in Projectiles)
                 projectile.Update(elapsed);
 
-            //TODO - maybe make custom class for different scene types to have custom scripts running in them
+            //Update simple presets
             if (ogPreset == ScenePreset.Intro)
             {
                 if (Input.IsPressed(Input.Key.Down) || Input.IsHeld(Input.Key.Down))
@@ -76,6 +61,11 @@ namespace FastTrackGame
                 {
                     game.LoadSceneNextFrame(2, true);
                 }
+            }
+            if (ogPreset == ScenePreset.HiScores)
+            {
+                if (Input.AnyMatching([Input.Key.Space, Input.Key.Escape], [Input.KeyState.Pressed]))
+                    game.LoadSceneNextFrame(0, true);
             }
 
             //Last but not least, complete removals
@@ -88,6 +78,7 @@ namespace FastTrackGame
             game.DebugTexts.Add($"Scene {Name} | Sprites {Sprites.Count}", 1);
         }
 
+        //TODO! Major optimization potential, by using a jagged char array instead of replaceat
         public void Draw(Game game)
         {
             //Prepare a buffer and apply any amount of changes to it
@@ -180,13 +171,18 @@ namespace FastTrackGame
 
         public static Scene Reset(Scene scene, Game game)
         {
-            var s = new Scene(scene.Name, game, scene.ogPreset);
+            Scene s;
+            if (scene is GameScene)
+                s = new GameScene(scene.Name, game, scene.ogPreset);
+            else
+                s = new Scene(scene.Name, game, scene.ogPreset);
             return s;
         }
 
-        private void LoadPreset(ScenePreset preset, Game game)
+
+        //Simple scenes do not need their own full class, so I use presets
+        public virtual void LoadPreset(ScenePreset preset, Game game)
         {
-            //TODO save in separate files?
             if(preset == ScenePreset.Intro)
             {
                 var funky = new CustomSprite(8, CustomSpriteType.Rings, game.ScreenResolution);
@@ -212,33 +208,6 @@ namespace FastTrackGame
                 Sprites.Add(logo);
                 Sprites.Add(pressspace);
                 Sprites.Add(hiscore);
-            }
-            if(preset == ScenePreset.Level1)
-            {
-                var player = Player.CreatePlayer();
-                player.Position = new Vector2(game.ScreenResolution.X / 2, game.ScreenResolution.Y / 2);
-                Sprites.Add(player);
-
-                var box = new Sprite(1, [
-                    new SpriteFrame(["XXXXXXXXXXXXXXXXXXXXXXXX"], 500f),
-                    new SpriteFrame(["xXxXxXxXxXxXxXxXxXxXxXxX"], 500f) ]);
-                box.IsSolid = true;
-                box.Position = new Vector2(game.ScreenResolution.X / 2, game.ScreenResolution.Y / 4 * 3);
-
-                var box2 = box.Clone();
-                box2.Position += new Vector2(50, 2);
-
-                var box3 = new Sprite(1, [
-                    new SpriteFrame(["XXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXX"], 500f),
-                    new SpriteFrame(["xXxXxXxXxXxXxXxXxXxXxXxX", "xXxXxXxXxXxXxXxXxXxXxXxX", "xXxXxXxXxXxXxXxXxXxXxXxX", "xXxXxXxXxXxXxXxXxXxXxXxX"], 500f) ]);
-                box3.IsSolid = true;
-                box3.Position = new Vector2(game.ScreenResolution.X / 3 + 20, game.ScreenResolution.Y / 4 * 3);
-
-                spawnCursor = game.CameraPosition.X + game.ScreenResolution.X;
-
-                Sprites.Add(box);
-                Sprites.Add(box2);
-                Sprites.Add(box3);
             }
             if(preset == ScenePreset.HiScores)
             {
