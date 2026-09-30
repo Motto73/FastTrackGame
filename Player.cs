@@ -7,36 +7,34 @@ namespace FastTrackGame
 { 
     internal class Player : Creature
     {
+        private bool doCameraTracking = false;
         private bool isCrouching = false;
         private float fireTimer = 0;
         //TODO - weapon class
         private float fireDelay = 100f;
         private Vector2 fireDir = new Vector2(1, 0);
 
-        public Player() : base(1) { }
+        private GameScene gameScene;
+
+        public Player(GameScene scene) : base(1) 
+        {
+            gameScene = scene;
+        }
 
         public override void Update(float e, Game game, bool onlyTime = false)
         {
             base.Update(e, game);
 
-            if (IsDead)
-            {
-                //Only check for restart/hiscores if dead
-                if (Input.IsPressed(Input.Key.Down) || Input.IsHeld(Input.Key.Down))
-                {
-                    game.LoadSceneNextFrame(3, true);
-                }
-                if (Input.IsPressed(Input.Key.Space ) || Input.IsHeld(Input.Key.Space ))
-                {
-                    game.LoadSceneNextFrame(0, true);
-                }
-                return;
-            }
+            if (IsDead) return;
 
             var ogPos = Position;
 
             if (ogPos.Y > game.CameraPosition.Y + game.ScreenResolution.Y + 5)
                 Kill(game);
+
+            if(!gameScene.GameStarted)
+                if (Input.AnyMatching([Input.Key.Up, Input.Key.Right, Input.Key.Down, Input.Key.Left], [Input.KeyState.Pressed]))
+                    gameScene.GameStarted = true;
 
             if (IsControlledByPlayer)
             {
@@ -142,7 +140,8 @@ namespace FastTrackGame
 
                 //Apply
                 Position += new Vector2(xMomentum, 0);
-                game.CameraPosition.X = Position.X - game.ScreenResolution.X / 2;
+                if (doCameraTracking)
+                    game.CameraPosition.X = Position.X - game.ScreenResolution.X / 2;
             }
             if (IsAffectedByGravity)
             {
@@ -159,6 +158,7 @@ namespace FastTrackGame
                 if (s is ParticleSystem)
                     num++;
             game.DebugTexts.Add("Total Particlesystems: " + num, 1);
+            game.DebugTexts.Add($"Distance: {(int)Position.X}", 1);
 
             //Firing animations
             if (fireTimer > 0)
@@ -206,6 +206,8 @@ namespace FastTrackGame
 
         public override void Kill(Game game)
         {
+            if (gameScene != null) gameScene.GameOver = true;
+
             var ps = new ParticleSystem(2)
             {
                 Position = Position + new Vector2(0, -3),
@@ -246,9 +248,9 @@ namespace FastTrackGame
 
         //Presets
 
-        public static Player CreatePlayer()
+        public static Player CreatePlayer(GameScene gs)
         {
-            var c = new Player();
+            var c = new Player(gs);
 
             c.Animations.Add("idle",
             [

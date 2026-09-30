@@ -40,8 +40,14 @@ namespace FastTrackGame
             //Update sprites second
             foreach (var sprite in Sprites)
             {
-                if(sprite.Position.X < game.CameraPosition.X)
-                    QueueRemove.Add(sprite);
+                //Camera bounds check, delete sprites that are left of camera
+                if (sprite.Position.X < game.CameraPosition.X && sprite is not ParticleSystem)
+                {
+                    if (sprite is Creature && !(sprite as Creature).IsDead)
+                        (sprite as Creature).Kill(game);
+                    if (sprite is not Player)
+                        QueueRemove.Add(sprite);
+                }
                 else
                     sprite.Update(elapsed, game);
             }
