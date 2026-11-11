@@ -48,7 +48,7 @@ namespace FastTrackGame
         public virtual void Kill(Game game)
         {
             IsDead = true;
-            game.DebugTexts.Add(ID + " DEAD", 250);
+            //game.DebugTexts.Add(ID + " DEAD", 250);
         }
 
         public void SetAnimation(string name, float speed = 1)

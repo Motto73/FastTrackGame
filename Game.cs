@@ -7,6 +7,8 @@ namespace FastTrackGame
 {
     internal class Game
     {
+        public static bool DebugPrint = true;
+
         //Settings and values
         private float frameTime;
         public float FrameRate { 

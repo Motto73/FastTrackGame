@@ -8,6 +8,7 @@
             const int SizeX = 100;
             const int SizeY = 26;
             const int FrameRate = 100;
+            Game.DebugPrint = false;
 
             //Console setup
             Console.ForegroundColor = ConsoleColor.Green;

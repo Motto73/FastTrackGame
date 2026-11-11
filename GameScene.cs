@@ -7,9 +7,11 @@ namespace FastTrackGame
 {
     internal class GameScene : Scene
     {
-
+        private int MinHeight = 4;
+        private int MaxAbyssSize = 2;
+        private int abyssSteps = 0;
         private float spawnCursor = 0;
-        private float gameSpeed = 20;
+        private float gameSpeed = 30;
         private float moveCam = 0.01f;
 
         public bool GameOver = false;
@@ -40,9 +42,11 @@ namespace FastTrackGame
                     game.LoadSceneNextFrame(0, true);
                 }
                 gameSpeed = 0;
+                spawnCursor = game.CameraPosition.X - game.ScreenResolution.X;
+                height = game.ScreenResolution.Y / 4 * 3;
             }
 
-            if (GameStarted)
+            if (GameStarted && !GameOver)
             {
                 //Camera
                 var dt = elapsed / 1000;
@@ -55,14 +59,29 @@ namespace FastTrackGame
                     spawnCursor += 8;
                     height += rng.Next(-1, 2);
                     if (height > game.ScreenResolution.Y - 1) height = game.ScreenResolution.Y - 1;
-                    if (height < 4) height = 4; 
+                    if (height < MinHeight) height = MinHeight;
 
-                    var box = new Sprite(1, [
-                    new SpriteFrame(["12345678"], 500f),
-                    new SpriteFrame(["87654321"], 500f) ]);
-                    box.IsSolid = true;
-                    box.Position = new Vector2(spawnCursor, height);
-                    Sprites.Add(box);
+                    if (rng.NextDouble() < 0.8 || abyssSteps >= MaxAbyssSize)
+                    {
+                        var box = new Sprite(1, [
+                        new SpriteFrame(["12345678"], 500f),
+                        new SpriteFrame(["87654321"], 500f) ]);
+                        box.IsSolid = true;
+                        box.Position = new Vector2(spawnCursor, height);
+                        Sprites.Add(box);
+                        abyssSteps = 0;
+                        if(rng.NextDouble() < 0.2)
+                        {
+                            var e = Enemy.CreateEnemy(this);
+                            e.Position = new Vector2(spawnCursor - 4, height - 1);
+                            Sprites.Add(e);
+                        }
+                    }
+                    //Can have holes, up to max abyss size
+                    else
+                    {
+                        abyssSteps++;
+                    }
                 }
             }
             

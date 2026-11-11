@@ -54,7 +54,10 @@ namespace FastTrackGame
 
             //Then projectiles
             foreach (var projectile in Projectiles)
-                projectile.Update(elapsed);
+                projectile.Update(elapsed, game);
+            for(int i = Projectiles.Count - 1; i >= 0; i--)
+                if (Projectiles[i].Finished)
+                    Projectiles.RemoveAt(i);
 
             //Update simple presets
             if (ogPreset == ScenePreset.Intro)
@@ -157,14 +160,17 @@ namespace FastTrackGame
                 }
             }
             //Draw debug texts too
-            int num = 1;
-            foreach((var k, var v) in game.DebugTexts)
+            if (Game.DebugPrint)
             {
-                //Only draw as many lines as can fit
-                if (num > buffer.Length) break;
-                var index = buffer.Length - num;
-                buffer[index] = buffer[index].Substring(0, buffer[index].Length - k.Length) + k;
-                num++;
+                int num = 1;
+                foreach ((var k, var v) in game.DebugTexts)
+                {
+                    //Only draw as many lines as can fit
+                    if (num > buffer.Length) break;
+                    var index = buffer.Length - num;
+                    buffer[index] = buffer[index].Substring(0, buffer[index].Length - k.Length) + k;
+                    num++;
+                }
             }
             //Print the buffer
             //Console.Clear(); //Clear was the naive solution, and made the console always show one blank frame which was super jarring
