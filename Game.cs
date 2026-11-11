@@ -109,6 +109,11 @@ namespace FastTrackGame
             else throw new ArgumentException($"Tried to change to nonexisting scene: {scene}");
         }
 
+        public void RefreshHighScores()
+        {
+            LoadedScenes[3] = new Scene("HiScores", this, ScenePreset.HiScores);
+        }
+
         public List<Sprite> GetLoadedSprites()
         {
             if (currentScene != -1 && currentScene < LoadedScenes.Count)

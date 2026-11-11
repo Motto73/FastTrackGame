@@ -219,15 +219,35 @@ namespace FastTrackGame
             {
                 var eye = new CustomSprite(8, CustomSpriteType.Eye, game.ScreenResolution);
                 eye.Position = game.ScreenResolution;
-
-                var pressspace = new Sprite(5, [
-                    new SpriteFrame([" HISCORES ARE NOT YET IMPLEMNTED"], 200f),
-                    new SpriteFrame(["------ UNDER CONSTRUCTION ------"], 200f) ]);
-                pressspace.SpaceIsAlpha = false;
-                pressspace.Position = game.ScreenResolution / 2 + pressspace.GetSize() / 2 + new Vector2(0, game.ScreenResolution.Y * 0.25f);
-                
                 Sprites.Add(eye);
-                Sprites.Add(pressspace);
+
+                var scores = HighScores.LoadSaves(10);
+                if (scores != null && scores.Length > 0)
+                {
+                    var sprite0 = new Sprite(5, [new SpriteFrame(["   Highscores   "], 200f)]);
+                    sprite0.Position = game.ScreenResolution / 2 + sprite0.GetSize() / 2;
+                    sprite0.SpaceIsAlpha = false;
+                    Sprites.Add(sprite0);
+
+                    var max = MathF.Min(scores.Length, 10);
+                    var last = HighScores.GetLastSave();
+
+                    for (int i = 0; i < max; i++)
+                    {
+                        var add = "   ";
+                        if (scores[i] == last) add = "< LAST RUN   ";
+                        var sprite = new Sprite(5, [new SpriteFrame([$"   {i + 1}. {scores[i]}" + add], 200f)]);
+                        sprite.Position = game.ScreenResolution / 2 + sprite.GetSize() / 2 + new Vector2(0, i + 1);
+                        sprite.SpaceIsAlpha = false;
+                        Sprites.Add(sprite);
+                    }
+                }
+                else
+                {
+                    var sprite = new Sprite(5, [new SpriteFrame(["No highscores yet!"], 200f)]);
+                    sprite.Position = game.ScreenResolution / 2 + sprite.GetSize() / 2 + new Vector2(0, game.ScreenResolution.Y * 0.25f);
+                    Sprites.Add(sprite);
+                }
             }
         }
 

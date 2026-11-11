@@ -28,7 +28,6 @@ namespace FastTrackGame
 
         }
 
-        //TODO - this shit is messy, separate player and creature?
         public override void Update(float e, Game game, bool onlyTime = false)
         {
             base.Update(e, game);

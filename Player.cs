@@ -16,6 +16,8 @@ namespace FastTrackGame
 
         private GameScene gameScene;
 
+        public int Score = 0;
+
         public Player(GameScene scene) : base(1) 
         {
             gameScene = scene;
@@ -242,6 +244,10 @@ namespace FastTrackGame
             game.LoadedScenes[game.CurrentScene].QueueAdd.Add(logo);
             game.LoadedScenes[game.CurrentScene].QueueAdd.Add(hiscore);
             game.LoadedScenes[game.CurrentScene].QueueAdd.Add(pressspace);
+
+            //Saving
+            Score += (int)Position.X;
+            HighScores.AddSave(Score);
 
             base.Kill(game);
         }
