@@ -249,6 +249,8 @@ namespace FastTrackGame
             Score += (int)Position.X;
             HighScores.AddSave(Score);
 
+            SetAnimation("debuge");
+
             base.Kill(game);
         }
 

@@ -107,7 +107,11 @@ namespace FastTrackGame
         {
             resetScene = resetCurrent;
             if (scene >= 0 && scene < LoadedScenes.Count)
+            {
                 nextScene = scene;
+                if (scene == 2)
+                    LoadedScenes[2] = new GameScene("Level1", this, ScenePreset.Level1);
+            }
             else throw new ArgumentException($"Tried to change to nonexisting scene: {scene}");
         }
 

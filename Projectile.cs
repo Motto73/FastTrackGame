@@ -33,7 +33,7 @@ namespace FastTrackGame
             Position += Velocity * e / 1000f;
             foreach (var s in game.GetLoadedSprites())
             {
-                if(s is Creature && s != Owner)
+                if(s is Creature && s != Owner && !(s as Creature).IsDead)
                 {
                     float otherLeft = s.Position.X - s.GetSize().X;
                     float otherRight = s.Position.X;

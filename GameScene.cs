@@ -8,7 +8,7 @@ namespace FastTrackGame
     internal class GameScene : Scene
     {
         private int MinHeight = 4;
-        private int MaxAbyssSize = 2;
+        private int MaxAbyssSize = 3;
         private int abyssSteps = 0;
         private float spawnCursor = 0;
         private float gameSpeed = 30;
@@ -70,7 +70,7 @@ namespace FastTrackGame
                         box.Position = new Vector2(spawnCursor, height);
                         Sprites.Add(box);
                         abyssSteps = 0;
-                        if(rng.NextDouble() < 0.2)
+                        if(rng.NextDouble() < 0.2 && spawnCursor > 120)
                         {
                             var e = Enemy.CreateEnemy(this);
                             e.Position = new Vector2(spawnCursor - 4, height - 1);
@@ -86,6 +86,12 @@ namespace FastTrackGame
             }
             
             base.Update(elapsed, game);
+        }
+
+        public Vector2 GetPlayerPos()
+        {
+            if (player1 != null) return player1.Position;
+            return Vector2.Zero;
         }
 
         public override void LoadPreset(ScenePreset preset, Game game)

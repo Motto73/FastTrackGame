@@ -9,10 +9,66 @@ namespace FastTrackGame
     {
         private GameScene gameScene;
         private int score = 25;
+        private float fireInterval = 1f;
+        private float fireTimer = 0;
+        Vector2 fireDir;
 
         public Enemy(GameScene scene) : base(1)
         {
             gameScene = scene;
+            fireTimer += (float)new Random().NextDouble();
+        }
+
+        public override void Update(float e, Game game, bool onlyTime = false)
+        {
+            if (!gameScene.GameOver)
+            {
+                fireTimer += e / 1000;
+                if(fireTimer > fireInterval)
+                {
+                    fireTimer = 0;
+                    var target = gameScene.GetPlayerPos();
+
+                    var pos = Position + new Vector2(-1, -1);
+                    var dir = target - pos;
+                    dir = Vector2.Normalize(dir);
+                    fireDir = dir;
+                    game.LoadedScenes[game.CurrentScene].Projectiles.Add(new Projectile('+', pos, dir * 50, this, 1, false));
+                }
+
+                if (fireTimer < .5 && fireDir.Length() > 0.1f)
+                {
+                    Vector2[] directions =
+                    {
+                        new(1, 0),  new(-1, 0), new(0, 1),  new(0, -1), new(1, 1),  new(1, -1), new(-1, 1), new(-1, -1) 
+                    };
+                    string[] names =
+                    {
+                        "Right", "Left", "Down", "Up", "RightDown", "RightUp", "LeftDown", "LeftUp"
+                    };
+
+                    float highestDot = float.MinValue;
+                    string closestDirection = "Right";
+
+                    for (int i = 0; i < directions.Length; i++)
+                    {
+                        float dot = Vector2.Dot(
+                            Vector2.Normalize(directions[i]),
+                            fireDir
+                        );
+
+                        if (dot > highestDot)
+                        {
+                            highestDot = dot;
+                            closestDirection = names[i];
+                        }
+                    }
+
+                    SetAnimation("fire" + closestDirection);
+                }
+                else SetAnimation("idle");
+            }
+            base.Update(e, game, onlyTime);
         }
 
         public void KillForMoney(Game game)
